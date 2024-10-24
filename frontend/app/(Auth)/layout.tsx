@@ -9,7 +9,7 @@ function layout({ children }: Props) {
             <div
                 className='rounded-md bg-gray-100 shadow-lg
             min-w-[400px] flex flex-col gap-3 items-center
-            p-3 min-h-[400px]
+            p-3 min-h-[400px] max-w-[80%] overflow-hidden
             '>
                 { children }
             </div>

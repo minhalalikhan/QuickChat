@@ -4,7 +4,7 @@ type Props = {}
 
 function Footer({ }: Props) {
     return (
-        <div>Footer</div>
+        <div className='w-full p-2 flex justify-center bg-gray-200'>Footer</div>
     )
 }
 
