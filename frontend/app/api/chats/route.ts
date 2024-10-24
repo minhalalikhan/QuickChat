@@ -9,12 +9,16 @@ import { getToken } from 'next-auth/jwt';
 export async function GET(req: NextRequest, res: NextResponse) {
     // Get the session from NextAuth
 
+    // WHEN REQUEST IS MADE FROM SERVER COMPONENTS ENSURE THAT Headers are ADDED EXPLICITLY USING NEXT/HEADERS
+
     // console.log('this is the input req', req)
     const session = await getServerSession(authOptions);
+
+    // getToken uses ENV variable NEXTAUTH_SECRET to decode
     const backendToken = await getToken({ req })
 
-    console.log('api/chats backtoken', backendToken)
-    console.log('api/chats session obj', session)
+    // console.log('api/chats backtoken', backendToken)
+    // console.log('api/chats session obj', session)
 
     if (!session) {
         // console.log('api/chats session', session)
@@ -38,7 +42,7 @@ export async function GET(req: NextRequest, res: NextResponse) {
 
 
     } catch (error: any) {
-        console.log('error in chats', error?.response)
+        // console.log('error in chats', error?.response)
         return NextResponse.json({ message: 'Failed to fetch data from Express backend' }, { status: 500 });
     }
 }

@@ -26,9 +26,9 @@ function Navbar({ }: Props) {
     useEffect(() => {
         if (status === 'authenticated') {
 
-            console.log(status, data)
-            const mydata = getdata()
-            console.log('navabr api chats', mydata)
+            // console.log(status, data)
+            // const mydata = getdata()
+            // console.log('navabr api chats', mydata)
         }
     }, [status])
 

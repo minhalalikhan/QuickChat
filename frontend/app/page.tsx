@@ -14,40 +14,28 @@ export default async function Home() {
 
   const HeaderList = headers()
 
-  // const mydata = await fetch('http://localhost:3000/api/chats', {
-  //   method: 'GET',
+  const mydata = await fetch('http://localhost:3000/api/chats', {
+    method: 'GET',
 
-  //   headers: HeaderList,
-  //   cache: 'no-store'
-  // })
-  // console.log('mydata', mydata.statusText)
+    // Without Headers , GET handler will not be able to get the session and token
+    headers: HeaderList,
+    cache: 'no-store'
+  })
 
-  // const show = mydata?.status === 401 ? 'fetch failed' : JSON.stringify(mydata.json())
-  const show = ''
-  //   // const finaldata_ = await mydata.json()
-  //   // console.log(finaldata_)
-  //   const finaldata_ = await getChats()
-  //   console.log(finaldata_)
-  // } catch (e: any) {
+  if (!(mydata.status === 200)) {
 
-  //   if (e.response) {
-  //     console.log('this is error response from page.tsx', e.response)
-  //   }
-  //   else {
-  //     console.log('some error', e)
-  //   }
-
-  // }
-
-
-
+    return <div>
+      Hompage data load failed
+    </div>
+  }
+  const resMydata = await mydata.json()
   return (
     <div className="flex flex-col w-full h-full">
       <Navbar />
       <div className="flex-1">
         <h1>MY chats data</h1>
         {/* { JSON.stringify(finaldata_) } */ }
-        { show }
+        { JSON.stringify(resMydata) }
         { false && <p className="bg-red-500 text-white p-3 text-xl">{ error }</p> }
       </div>
       <Footer />
