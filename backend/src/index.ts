@@ -3,8 +3,21 @@ import cors from 'cors'
 import AuthRouter from "./Routes/AuthRoutes"
 import bcrypt from 'bcryptjs'
 import ChatRouter from "./Routes/ChatRoutes"
+
+import { createServer } from "http"
+import { Server } from "socket.io"
+import { SetupSocket } from "./socket"
+
+
+
 const PORT = 4000
 const app: Application = express()
+
+const server = createServer(app)
+const io = new Server(server, { cors: { origin: '*' } })
+export { io }
+
+SetupSocket(io)
 
 app.use(cors())
 app.use(express.json())
@@ -21,6 +34,6 @@ app.get('/', async (req: Request, res: Response) => {
 })
 
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`chat server running on ${PORT}`)
 })

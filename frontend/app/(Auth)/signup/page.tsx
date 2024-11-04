@@ -81,7 +81,7 @@ function page({ }: Props) {
         return (
             <>
                 <h1 className='font-bold'>SIGN UP</h1>
-                <p>{ JSON.stringify(status) }</p>
+
                 <div className='flex-1 flex flex-col w-[80%] items-center gap-4 justify-center'>
                     <Input
                         name='email' placeholder='Enter Email'
