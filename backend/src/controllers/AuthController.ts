@@ -107,7 +107,11 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
         // Verify the JWT token
         const decoded = jwt.verify(token, JWT_SECRET);
         // Attach the decoded user information to the request
-        console.log('decoded', decoded)
+        console.log('decoded', decoded);
+
+        (req as any).email = (decoded as any).email
+
+
         next();
     } catch (err) {
         res.status(401).json({ message: 'Invalid token' });

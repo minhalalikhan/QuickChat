@@ -49,10 +49,10 @@ function Navbar({ }: Props) {
     }
 
     return (
-        <div className='flex w-full px-2 py-1 flex-row bg-slate-500 min-h-[50px]
-         text-white justify-between items-center'>
-            <h1>Quick Chat</h1>
-            <button onClick={ SignOut }>
+        <div className='flex w-full px-6 py-1 flex-row min-h-[50px]
+          justify-between items-center'>
+            <h1 className='font-bold text-2xl'>Quick Chat</h1>
+            <button onClick={ SignOut } className='text-slate-500'>
                 SignOut
             </button>
         </div>

@@ -71,7 +71,7 @@ export const authOptions: AuthOptions = {
             const newtoken: JWT & { mytoken?: string } = token
             const Newsession: Session & { mytoken?: string } = session
 
-            // Newsession.mytoken = newtoken.mytoken
+            Newsession.mytoken = newtoken.mytoken
 
             // console.log('new session', Newsession)
             return Newsession

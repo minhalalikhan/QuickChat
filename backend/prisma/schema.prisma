@@ -14,17 +14,58 @@ datasource db {
 }
 
 model User {
-  id         Int        @id @default(autoincrement())
-  name       String
-  username   String     @unique
-  created_at DateTime   @default(now())
-  userAuth   UserAuth[]
-  userAuthId Int
+  id             Int              @id @default(autoincrement())
+  username       String           @unique
+  email          String           @unique
+  created_at     DateTime         @default(now())
+  userAuth       UserAuth?
+  GroupChat      GroupChat[]      @relation("UserGroupChats")
+  AdminofGroups  GroupChat[]
+  Messages       Messages[]
+  UnreadMessages UnreadMessages[]
 }
 
 model UserAuth {
   id       Int    @id @default(autoincrement())
-  username String @unique
+  email    String @unique
   password String
-  user     User   @relation(fields: [username], references: [username])
+  user     User   @relation(fields: [email], references: [email])
+}
+
+model GroupChat {
+  id             Int              @id @default(autoincrement())
+  GroupName      String           @unique
+  Description    String
+  Password       String
+  Created_at     DateTime         @default(now())
+  Admin          User             @relation(fields: [userId], references: [id])
+  GroupMembers   User[]           @relation("UserGroupChats")
+  userId         Int
+  Messages       Messages[]
+  UnreadMessages UnreadMessages[]
+}
+
+model Messages {
+  id             Int              @id @default(autoincrement())
+  Message        String
+  Sender         User             @relation(fields: [userId], references: [id])
+  GroupChat      GroupChat        @relation(fields: [groupChatId], references: [id])
+  Created_at     DateTime         @default(now())
+  userId         Int
+  groupChatId    Int
+  UnreadMessages UnreadMessages[]
+}
+
+model UnreadMessages {
+  id            Int       @id @default(autoincrement())
+  LatestMessage Messages  @relation(fields: [messagesId], references: [id])
+  User          User      @relation(fields: [userId], references: [id])
+  GroupChat     GroupChat @relation(fields: [groupChatId], references: [id])
+  UnreadCount   Int       @default(0)
+  Created_at    DateTime  @default(now())
+  messagesId    Int
+  userId        Int
+  groupChatId   Int
+
+  @@unique([userId, groupChatId])
 }

@@ -1,3 +1,4 @@
+import ChatPage from '@/components/chats/ChatPage'
 import React from 'react'
 
 type params = { id: string }
@@ -5,7 +6,7 @@ type params = { id: string }
 function chat({ params }: { params: params }) {
 
     return (
-        <div className=''>chat with user with ID { params.id }</div>
+        <ChatPage GroupName={ params.id } />
     )
 }
 
