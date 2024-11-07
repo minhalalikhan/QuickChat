@@ -29,11 +29,11 @@ export default async function DashboardLayout({
     return (
         <div className="flex flex-col w-full h-full">
             <Navbar />
-            <div className="flex-1 w-full flex ">
+            <div className="flex-1 w-full flex overflow-y-auto">
                 <ChatList />
                 <div className="flex-1 h-full bg-[#f2f2f2] p-6">
 
-                    <div className="bg-white rounded-md  w-full h-full">
+                    <div className="bg-white rounded-md  w-full h-full overflow-y-auto">
                         { children }
 
                     </div>

@@ -7,6 +7,7 @@ import { customFetch } from './utility'
 import { signOut, useSession } from 'next-auth/react'
 import { Session } from 'next-auth'
 import { usePathname, useRouter } from 'next/navigation'
+import { GoHomeFill } from "react-icons/go";
 
 type Props = {}
 
@@ -106,9 +107,12 @@ function ChatList({ }: Props) {
     }, [socket])
 
     return (
-        <div className='flex h-full w-[250px] flex-col '>
+        <div className='flex h-full w-[250px] flex-col overflow-y-auto'>
             <Link href={ '/' }
-                className={ `w-full flex  flex-col gap-2 p-4 border-b border-b-black hover:bg-gray-100 ${decodeURIComponent(path) === '/' ? 'bg-gray-200' : ''}` }>
+                className={ `w-full flex 
+                  gap-2 p-4 border-b items-center
+                  border-b-black hover:bg-gray-100 ${decodeURIComponent(path) === '/' ? 'bg-gray-200' : ''}` }>
+                <GoHomeFill />
                 Home
             </Link>
             {
@@ -118,7 +122,19 @@ function ChatList({ }: Props) {
                     )
                 })
             }
-
+            <ChatListItem Group={ { GroupName: 'Random' } } />
+            <ChatListItem Group={ { GroupName: 'Random' } } />
+            <ChatListItem Group={ { GroupName: 'Random' } } />
+            <ChatListItem Group={ { GroupName: 'Random' } } />
+            <ChatListItem Group={ { GroupName: 'Random' } } />
+            <ChatListItem Group={ { GroupName: 'Random' } } />
+            <ChatListItem Group={ { GroupName: 'Random' } } />
+            <ChatListItem Group={ { GroupName: 'Random' } } />
+            <ChatListItem Group={ { GroupName: 'Random' } } />
+            <ChatListItem Group={ { GroupName: 'Random' } } />
+            <ChatListItem Group={ { GroupName: 'Random' } } />
+            <ChatListItem Group={ { GroupName: 'Random' } } />
+            <ChatListItem Group={ { GroupName: 'Random' } } />
         </div>
     )
 }

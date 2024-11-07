@@ -19,7 +19,7 @@ function ChatPage({ GroupName }: Props) {
 
 
     return (
-        <div className='w-full h-full flex flex-col'>
+        <div className='w-full h-full flex flex-col '>
             {/* Header */ }
             <div className='w-full h-[50px] border-b-2 bg-slate-100 px-2 flex items-center justify-between'>
                 <h4 className='font-bold'>{ decodeURIComponent(GroupName) }</h4>

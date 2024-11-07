@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import React, { useEffect } from 'react'
 
 
+
 type Props = {}
 
 async function getdata() {
@@ -49,12 +50,19 @@ function Navbar({ }: Props) {
     }
 
     return (
-        <div className='flex w-full px-6 py-1 flex-row min-h-[50px]
+        <div className='flex w-full  py-1 flex-row min-h-[50px]
           justify-between items-center'>
-            <h1 className='font-bold text-2xl'>Quick Chat</h1>
-            <button onClick={ SignOut } className='text-slate-500'>
-                SignOut
-            </button>
+            <div className='w-[250px] px-6'>
+                <h1 className='font-bold text-2xl'>Quick Chat</h1>
+
+            </div>
+            <div className=' flex  px-6 justify-between'>
+
+
+                <button onClick={ SignOut } className='text-slate-500'>
+                    SignOut
+                </button>
+            </div>
         </div>
     )
 }
