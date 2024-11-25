@@ -14,7 +14,7 @@ type Props = {}
 
 async function getmyGroupChats(session: Session) {
 
-
+    console.log('getting data for sidebar')
     const myheaders = {
         'Content-Type': 'application/json',
         // Add the token to headers, check if session exists and has mytoken
@@ -122,19 +122,8 @@ function ChatList({ }: Props) {
                     )
                 })
             }
-            <ChatListItem Group={ { GroupName: 'Random' } } />
-            <ChatListItem Group={ { GroupName: 'Random' } } />
-            <ChatListItem Group={ { GroupName: 'Random' } } />
-            <ChatListItem Group={ { GroupName: 'Random' } } />
-            <ChatListItem Group={ { GroupName: 'Random' } } />
-            <ChatListItem Group={ { GroupName: 'Random' } } />
-            <ChatListItem Group={ { GroupName: 'Random' } } />
-            <ChatListItem Group={ { GroupName: 'Random' } } />
-            <ChatListItem Group={ { GroupName: 'Random' } } />
-            <ChatListItem Group={ { GroupName: 'Random' } } />
-            <ChatListItem Group={ { GroupName: 'Random' } } />
-            <ChatListItem Group={ { GroupName: 'Random' } } />
-            <ChatListItem Group={ { GroupName: 'Random' } } />
+
+
         </div>
     )
 }

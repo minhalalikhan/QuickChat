@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { authMiddleware } from "../controllers/AuthController";
 import { GroupChats } from "../../DATA/data";
+import bcrypt from 'bcryptjs';
+
+import { SALT } from "../controllers/AuthController";
 
 const ChatRouter = Router()
 ChatRouter.use(authMiddleware)
@@ -23,7 +26,23 @@ function HideMembers(input: any[], email: string) {
     return Newresults
 }
 
+function format(input: any[]) {
+    const Newresults = input.map((Group) => {
+
+
+
+
+
+        return { ...Group, password: '' }
+    })
+
+    return Newresults
+}
 ChatRouter.get('/groupchats', (req, res) => {
+
+
+
+    const { SearchText = '' } = req.query
 
     // return all chats
     // apply pagination
@@ -32,19 +51,16 @@ ChatRouter.get('/groupchats', (req, res) => {
 
     const email = (req as any).email
 
-    // const editGroupChats = GroupChats.map((Group) => {
-
-    //     const checkuser = Group.members.find((member) => member === email)
+    let editGroupChats = GroupChats.filter((grp) => {
 
 
-    //     if (checkuser) {
-    //         return { ...Group, members: [email] }
-    //     }
-    //     return { ...Group, members: [] }
-    // })
+        return grp.GroupName.toLowerCase().trim().includes((SearchText as string).toLowerCase().trim())
+    })
 
-    const editGroupChats = HideMembers(GroupChats, email)
 
+
+    editGroupChats = HideMembers(editGroupChats, email)
+    editGroupChats = format(editGroupChats)
     res.json(editGroupChats)
 
 })
@@ -75,44 +91,79 @@ ChatRouter.get('/mygroupchats/', (req, res) => {
     })
 
     filteredres = HideMembers(filteredres, email)
+    filteredres = format(filteredres)
     res.json({ results: filteredres })
 
 })
 
-ChatRouter.post('/creategroupchat', (req, res) => {
+ChatRouter.post('/creategroupchat', async (req, res) => {
 
-    // return all chats that I am part of 
-    // apply pagination
-    //  keyword filter
-    // order : alphabetic, size , created date
+    const { GroupName, Description, Password } = req.body
 
-    res.send('working on this one')
+    const admin = (req as any)?.email
+
+    // 1. make sure all credentials are present
+    // 2.check if  group already exist 
+    // 3. if not proceed by creating group
+    // 4. return {group:groupname, id:id}
+    console.log('enter create grp')
+
+    const grpcheck = GroupChats.find((grp) => grp.GroupName === GroupName)
+    if (grpcheck) {
+        res.status(400).json({ message: 'Group Already Exists' })
+        return
+    }
+    else {
+        console.log('proceed create grp')
+        const id = GroupChats.length + 1
+        const hashedpassword = await bcrypt.hash(Password, SALT)
+
+        GroupChats.push({
+            id: id,
+            Admin: admin,
+            description: Description,
+            GroupName: GroupName,
+            password: hashedpassword,
+            created_at: '',
+            members: [admin]
+        })
+
+        res.json({ message: 'Group Created', data: { GroupName, id } })
+    }
 
 })
 
 
-ChatRouter.post('/joingroupchat', (req, res) => {
+ChatRouter.post('/joingroupchat', async (req, res) => {
 
-    let group = (req.body)
-    group = group.groupchat
+    const { GroupName, id, Password } = (req.body)
+
 
     const email = (req as any).email
-    // return all chats that I am part of 
-    // apply pagination
-    //  keyword filter
-    // order : alphabetic, size , created date
 
-    const checkgrp = GroupChats.find((item) => {
-
-        return item.id === group.id
-    })
-
-    if (!checkgrp) {
+    const Group = GroupChats.find((grp) => grp.id === id)
+    if (!Group) {
         res.status(404).send('Group Not found')
+        return
     }
+    // fidn group
 
-    checkgrp?.members.push(email)
-    res.send({ message: 'proceed' })
+    const validpassword = await bcrypt.compare(Password, Group.password)
+    if (validpassword) {
+        const finduser = Group.members.find((member) => member === email)
+        if (finduser) {
+            res.json({ message: 'Already Member of the Group' })
+            return
+        }
+        else {
+            Group.members.push(email)
+            res.json({ message: ' Group joined Successfully', data: { GroupName: Group.GroupName, id: Group.id } })
+            return
+        }
+    }
+    else {
+        res.status(401).json({ message: 'Invalid Password' })
+    }
 
 })
 
@@ -142,7 +193,7 @@ ChatRouter.delete('/deletegroupchat', (req, res) => {
 
 ChatRouter.get('/', (req, res) => {
 
-    console.log('got inside chats get')
+
     res.json({
         chats: ['mak', 'sam', 'pathak', 'ayush']
     })

@@ -2,8 +2,8 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { Request, Response, NextFunction } from 'express';
 
-const JWT_SECRET = 'quickchat72631'
-const SALT = 10
+export const JWT_SECRET = 'quickchat72631'
+export const SALT = 10
 
 type User = {
     id: string,

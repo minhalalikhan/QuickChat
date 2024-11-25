@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { Label } from "@/components/ui/label";
+import axios, { AxiosHeaders, AxiosRequestHeaders } from "axios";
 
 // import { headers } from "next/headers";
 
@@ -37,16 +38,18 @@ type Group = {
 
 }
 
-async function getGroupChats(serversession: Session) {
+async function getGroupChats(serversession: Session, SearchText: string = '') {
     const myheaders = {
         'Content-Type': 'application/json',
         // Add the token to headers, check if session exists and has mytoken
         ...(serversession && (serversession as any).mytoken ? { 'Authorization': `Bearer ${(serversession as any).mytoken}` } : {})
     }
 
+    const params = new URLSearchParams({
+        SearchText
+    })
 
-
-    const mydata = await fetch('http://localhost:4000/chats/groupchats', {
+    const mydata = await fetch('http://localhost:4000/chats/groupchats?' + params, {
         method: 'GET',
 
         // Without Headers , GET handler will not be able to get the session and token
@@ -66,23 +69,31 @@ async function getGroupChats(serversession: Session) {
     return []
 }
 
+
 export default function Dashboard() {
     let error = ''
 
     const { data: serversession, status } = useSession()
-
+    const [SearchParams, setSearchParams] = useState({ searchText: '' })
 
 
     const [resMydata, setresMydata] = useState<Object[]>([])
 
     // const HeaderList = headers()
 
-    async function fetch() {
+    useEffect(() => {
+
+        if (serversession) {
+            myfetch()
+        }
+    }, [SearchParams, serversession])
+
+    async function myfetch() {
 
         if (serversession) {
 
-            const getres = await getGroupChats(serversession)
-
+            const getres = await getGroupChats(serversession, SearchParams.searchText)
+            console.log('getres', getres)
             setresMydata(getres)
         }
     }
@@ -91,7 +102,7 @@ export default function Dashboard() {
 
         if (serversession && resMydata.length === 0) {
 
-            fetch()
+            myfetch()
         }
     }, [serversession])
 
@@ -109,6 +120,8 @@ export default function Dashboard() {
             <div className='flex gap-[10px] items-center p-3'>
 
                 <Input placeholder='Search Chat Groups'
+                    value={ SearchParams.searchText }
+                    onChange={ (e) => setSearchParams({ ...SearchParams, searchText: e.target.value }) }
                     className='w-[300px] focus-visible:ring-0 bg-[#f5f5f5]' />
                 <div className='p-1 rounded hover:bg-gray-200 cursor-pointer active:bg-gray-300'>
 
@@ -120,13 +133,8 @@ export default function Dashboard() {
                 { resMydata.map((item, i) => {
 
                     return (
-                        <>
-                            <GroupChatCard FetchFunc={ fetch } key={ i } groupchat={ item } />
-                            <GroupChatCard FetchFunc={ fetch } key={ i + 10 } groupchat={ item } />
-                            <GroupChatCard FetchFunc={ fetch } key={ i + 20 } groupchat={ item } />
-                            <GroupChatCard FetchFunc={ fetch } key={ i + 30 } groupchat={ item } />
-                            <GroupChatCard FetchFunc={ fetch } key={ i + 40 } groupchat={ item } />
-                        </>
+                        <GroupChatCard FetchFunc={ myfetch } key={ i } groupchat={ item } />
+
                     )
                 }) }
             </div>
@@ -210,27 +218,45 @@ function GroupChatCard({ groupchat, FetchFunc }: { groupchat: any, FetchFunc: Fu
 
     }
 
+    function IsMember(members: string[]) {
+        const findm = members.find((member: string) => member === serversession?.user?.email)
+
+        if (findm)
+            return true
+
+        return false
+    }
+
     return (<div className="w-[400px] min-h-[100px] p-2  shadow-lg flex flex-col">
         <h4 className="font-bold py-2">{ groupchat.GroupName }</h4>
         <p className="font-medium text-gray-700">{ groupchat.description }</p>
-        { groupchat.members.length === 0 ?
+        { IsMember(groupchat.members) ?
+            <Button className="self-end m-[10px] bg-slate-50 text-black border-2
+          border-black rounded-md hover:bg-gray-200 "
+                onClick={ ViewGroup }
+            >View group</Button> :
             // <Button className="self-end m-[10px]"
             //     onClick={ JoinGroup }
             // >Join group</Button> 
-            <JoinGroupChatPopup />
-            :
-            <Button className="self-end m-[10px] bg-slate-50 text-black border-2
-             border-black rounded-md hover:bg-gray-200 "
-                onClick={ ViewGroup }
-            >View group</Button> }
+            <JoinGroupChatPopup GroupDetails={ groupchat } />
+
+        }
     </div>)
 }
 
 function CreateGroupChatPopup() {
 
+    const socket: Socket = useMemo(() => {
+
+        const socket = getSocket()
+
+        return socket
+    }, [])
+
+    const { data: session, status } = useSession()
     const [CreateGroupPopup, setCreateGroupPopup] = useState(false)
     const [err, setErr] = useState('')
-
+    const router = useRouter()
 
     useEffect(() => {
 
@@ -255,9 +281,24 @@ function CreateGroupChatPopup() {
 
     async function Create(e: FormEvent) {
         e.preventDefault()
+        setErr('')
         try {
             const validate = await Schema.validate(GroupData, { abortEarly: true })
+            const myheaders = {
+                'Content-Type': 'application/json',
+                // Add the token to headers, check if session exists and has mytoken
+                'Authorization': `Bearer ${(session as any).mytoken}`
+            }
 
+            const response = await axios.post('http://localhost:4000/chats/creategroupchat', GroupData, { headers: myheaders })
+
+            if (response.status === 200) {
+
+                // route to page
+                socket.emit('creategroup', response.data.data)
+                router.push('/chat/' + response.data.data.GroupName)
+                //send socket event for Chat
+            }
             setCreateGroupPopup(false)
         }
         catch (e: any) {
@@ -342,10 +383,18 @@ function CreateGroupChatPopup() {
 }
 
 
-function JoinGroupChatPopup() {
+function JoinGroupChatPopup({ GroupDetails }: { GroupDetails: any }) {
 
     const [JoinGroupPopup, setJoinGroupPopup] = useState(false)
     const [err, setErr] = useState('')
+    const { data: session, status } = useSession()
+    const router = useRouter()
+    const socket: Socket = useMemo(() => {
+
+        const socket = getSocket()
+
+        return socket
+    }, [])
 
 
     useEffect(() => {
@@ -367,16 +416,35 @@ function JoinGroupChatPopup() {
 
     });
 
-    async function Create(e: FormEvent) {
+    async function Join(e: FormEvent) {
         e.preventDefault()
+        setErr('')
         try {
             const validate = await Schema.validate(GroupData, { abortEarly: true })
+            const myheaders = {
+                'Content-Type': 'application/json',
+                // Add the token to headers, check if session exists and has mytoken
+                'Authorization': `Bearer ${(session as any).mytoken}`
+            }
+
+            const response = await axios.post('http://localhost:4000/chats/joingroupchat', { ...GroupDetails, ...GroupData }, { headers: myheaders })
+
+            if (response.status === 200) {
+
+
+                socket.emit('joingroup', response.data.data)
+                router.push('/chat/' + response.data.data.GroupName)
+                //send socket event for Chat
+            }
 
             setJoinGroupPopup(false)
         }
         catch (e: any) {
             if (e.name === 'ValidationError') {
                 setErr(e.message)
+            }
+            else {
+                console.log(e)
             }
         }
 
@@ -395,7 +463,7 @@ function JoinGroupChatPopup() {
                         Enter The following Details
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={ Create }>
+                <form onSubmit={ Join }>
 
                     <div className="grid gap-4 py-4">
                         <div className="flex flex-col gap-2">

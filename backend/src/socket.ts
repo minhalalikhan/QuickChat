@@ -12,9 +12,9 @@ export function SetupSocket(io: Server) {
         socket.emit('message', 'hello world')
 
         // EVENTS 
-        socket.on('joingroup', (groupname) => {
-
-            socket.join(groupname)
+        socket.on('joingroup', (GroupData) => {
+            console.log('join group event ')
+            socket.join(GroupData.GroupName)
             socket.emit('chatgrouplistupdated', " update chat list")
 
             // io.to(groupname).emit('message', 'new member has joined us')
@@ -22,7 +22,10 @@ export function SetupSocket(io: Server) {
         })
         // create group
 
-        socket.on('creategroup', ({ user, }) => {
+        socket.on('creategroup', (GroupData) => {
+
+            socket.join(GroupData.GroupName)
+            socket.emit('chatgrouplistupdated', " update chat list")
 
         })
         // JOIN GROUP
