@@ -65,6 +65,33 @@ ChatRouter.get('/groupchats', (req, res) => {
 
 })
 
+ChatRouter.get('/getchatmessages', async (req, res) => {
+    const { chatid = '' } = req.query
+    const email = (req as any).email
+
+    if (!chatid || isNaN(Number(chatid)) || !Number.isInteger(Number(chatid))) {
+
+        res.status(400).json({
+            error: "Bad Request",
+            message: "Missing or invalid 'id' query parameter. Expected an integer."
+        });
+        return
+    }
+
+
+    const Group = GroupChats.find((grp) => grp.id === Number(chatid))
+    if (!Group) {
+        res.status(404).json({ message: 'Group Not found' })
+        return
+    }
+    const checkAccess = Group.members.find((user) => user === email)
+    if (!checkAccess) {
+        res.status(403).json({ message: 'You Dont have access to this group yet' })
+        return
+    }
+    res.json({ message: 'group chat here', data: [] })
+
+})
 
 ChatRouter.get('/mygroupchats/', (req, res) => {
 
@@ -136,7 +163,7 @@ ChatRouter.post('/creategroupchat', async (req, res) => {
 
 ChatRouter.post('/joingroupchat', async (req, res) => {
 
-    const { GroupName, id, Password } = (req.body)
+    const { id, Password } = (req.body)
 
 
     const email = (req as any).email

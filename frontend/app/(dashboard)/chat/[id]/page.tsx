@@ -6,7 +6,7 @@ type params = { id: string }
 function chat({ params }: { params: params }) {
 
     return (
-        <ChatPage GroupName={ params.id } />
+        <ChatPage GroupID={ params.id } />
     )
 }
 

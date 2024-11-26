@@ -136,7 +136,7 @@ function ChatListItem({ Group }: { Group: any }) {
 
     return (
         // <div className='w-full flex  flex-col gap-2 p-4 border-b border-b-black'>
-        <Link href={ '/chat/' + Group?.GroupName }
+        <Link href={ '/chat/' + Group?.id }
             className={ `w-full flex  flex-col gap-2 p-4 border-b border-b-black hover:bg-gray-100 ${decodeURIComponent(path) === '/chat/' + Group?.GroupName ? 'bg-gray-200' : ''}` }
         >
             <p>{ Group?.GroupName }</p>

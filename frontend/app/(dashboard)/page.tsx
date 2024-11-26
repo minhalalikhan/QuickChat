@@ -214,7 +214,7 @@ function GroupChatCard({ groupchat, FetchFunc }: { groupchat: any, FetchFunc: Fu
     const Router = useRouter()
 
     function ViewGroup() {
-        Router.push('/chat/' + groupchat.GroupName)
+        Router.push('/chat/' + groupchat.id)
 
     }
 
@@ -296,7 +296,7 @@ function CreateGroupChatPopup() {
 
                 // route to page
                 socket.emit('creategroup', response.data.data)
-                router.push('/chat/' + response.data.data.GroupName)
+                router.push('/chat/' + response.data.data.id)
                 //send socket event for Chat
             }
             setCreateGroupPopup(false)
@@ -433,7 +433,7 @@ function JoinGroupChatPopup({ GroupDetails }: { GroupDetails: any }) {
 
 
                 socket.emit('joingroup', response.data.data)
-                router.push('/chat/' + response.data.data.GroupName)
+                router.push('/chat/' + response.data.data.id)
                 //send socket event for Chat
             }
 
