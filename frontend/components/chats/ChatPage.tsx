@@ -48,18 +48,32 @@ type Props = { GroupID: string }
 
 function ChatPage({ GroupID }: Props) {
 
-    const socket: Socket = useMemo(() => {
+    const socket: Socket = getSocket()
 
-        const socket = getSocket()
 
-        return socket
-    }, [])
+    // const socket: Socket = useMemo(() => {
+
+    //     const socket = getSocket()
+
+    //     return socket
+    // }, [])
 
     const { data: session, status } = useSession()
     const router = useRouter()
 
     const [errmsg, setErrmsg] = useState('')
-    const [ChatMessages, setChatMessages] = useState([])
+    const [GroupDetails, setGroupDetails] = useState(
+        {
+            id: 0,
+            GroupName: '',
+            Admin: '',
+            members: [],
+            description: ''
+        })
+
+    const ThisUser = session?.user?.email
+    const IsAdmin = GroupDetails && GroupDetails.Admin === ThisUser ? true : false
+    const [ChatMessages, setChatMessages] = useState<any[]>([])
     const [Chatstatus, setChatStatus] =
         useState<'INIT' | 'Loading' | 'error' | 'GRP-NOT-FOUND' | 'CREDS-REQUIRED' | 'OK'>('INIT')
 
@@ -79,6 +93,9 @@ function ChatPage({ GroupID }: Props) {
             if (response.status === 200) {
 
                 setChatStatus('OK')
+                console.log('dataaaaaaa', response)
+                setChatMessages(response.data.data.GroupMessages)
+                setGroupDetails(response.data.data.GroupDetails)
                 //send socket event for Chat
             }
 
@@ -118,11 +135,46 @@ function ChatPage({ GroupID }: Props) {
 
     useEffect(() => {
 
+        console.log(GroupDetails, ChatMessages)
+    }, [GroupDetails, ChatMessages])
+
+    useEffect(() => {
+
         if (session && Chatstatus === 'INIT') {
             console.log('time to get chat')
             GetChatMessages()
         }
+
     }, [session, Chatstatus])
+
+
+    useEffect(() => {
+
+        console.log(Chatstatus, socket.connected)
+        if (Chatstatus === 'OK') {
+            console.log('socket is connected for chatpage')
+            socket.on('new_chat_message', (chat: any) => {
+                console.log('got new messgae', ChatMessages, chat, GroupID)
+                if (chat.Group == GroupID) {
+                    console.log('set chat msg')
+                    console.log([...ChatMessages, chat])
+                    setChatMessages([...ChatMessages, chat])
+
+                }
+            })
+            socket.on('groupdestroyed', (GrpID) => {
+
+                if (GroupID == GrpID) {
+                    router.replace('/')
+                }
+            })
+        }
+    }, [Chatstatus, ChatMessages, router])
+
+    useEffect(() => {
+        console.log('final state of chat', ChatMessages)
+        scrollToBottom()
+    }, [ChatMessages])
 
     if (Chatstatus === 'Loading')
         return (<PageLoading />)
@@ -146,32 +198,29 @@ function ChatPage({ GroupID }: Props) {
             <div className='w-full h-full flex flex-col '>
                 {/* Header */ }
                 <div className='w-full h-[50px] border-b-2 bg-slate-100 px-2 flex items-center justify-between'>
-                    <h4 className='font-bold'>{ decodeURIComponent('GroupName') }</h4>
+                    <h4 className='font-bold'>{ GroupDetails?.GroupName }{ IsAdmin }</h4>
+
                     {/* ACTIONS : leave group , share group invite view members */ }
-                    <Settings />
+                    <Settings IsAdmin={ IsAdmin } GroupDetails={ GroupDetails } />
                 </div>
                 {/* Chat */ }
                 <div className='flex-1 flex flex-col overflow-y-auto w-full gap-3 p-3 items-end'
                     id='msgcontainer'>
-                    <Message msg='Time up' type='USER' />
-                    <Message msg='hello there' type='OTHER' />
-                    <Message msg='amigo' type='OTHER' />
-                    <Message msg='random' type='OTHER' />
-                    <Message msg='oyyyye' type='USER' />
-                    <Message msg='Time to work' type='USER' />
-                    <Message msg='random' type='OTHER' />
-                    <Message msg='msg 1' type='USER' />
-                    <Message msg='Time up' type='USER' />
-                    <Message msg='hello there' type='OTHER' />
-                    <Message msg='amigo' type='OTHER' />
-                    <Message msg='random' type='OTHER' />
-                    <Message msg='oyyyye' type='USER' />
-                    <Message msg='Time to work' type='USER' />
-                    <Message msg='random' type='OTHER' />
+                    {
+                        ChatMessages.map((msg: any, i) => {
+
+                            return <Message
+                                msg={ msg }
+                                key={ i }
+                                type={ msg.Sender === ThisUser ? 'USER' : 'OTHER' } />
+                        })
+                    }
+
+
                     <div ref={ messagesEndRef } />
                 </div>
                 {/* Text Field */ }
-                <MessageInputBar status={ Chatstatus } />
+                <MessageInputBar status={ Chatstatus } GroupID={ GroupID } />
 
             </div>
         )
@@ -180,24 +229,27 @@ function ChatPage({ GroupID }: Props) {
 export default ChatPage
 
 
-function Settings() {
+function Settings({ IsAdmin, GroupDetails }: { IsAdmin: boolean, GroupDetails: any }) {
     return (
 
         <Popover>
             <PopoverTrigger><IoSettingsSharp /></PopoverTrigger>
             <PopoverContent className='w-[200px] mr-4'>
                 <div className='flex flex-col w-full'>
-                    <div className='w-full h-[40px] p-1 hover:bg-slate-100 border-b cursor-pointer'>
+                    {/* <div className='w-full h-[40px] p-1 hover:bg-slate-100 border-b cursor-pointer'>
                         <ShareInvitePopup />
-                    </div>
+                    </div> */}
                     <div className='w-full h-[40px] p-1 hover:bg-slate-100 border-b cursor-pointer'>
-                        <LeaveGroupChatPopup />
+                        <LeaveGroupChatPopup GroupID={ GroupDetails.id } />
                     </div>
+                    {
+                        IsAdmin &&
+                        <div className='w-full h-[40px] p-1 hover:bg-slate-100 border-b cursor-pointer'>
+                            <DeleteGroupChatPopup GroupID={ GroupDetails.id } />
+                        </div>
+                    }
                     <div className='w-full h-[40px] p-1 hover:bg-slate-100 border-b cursor-pointer'>
-                        <DeleteGroupChatPopup />
-                    </div>
-                    <div className='w-full h-[40px] p-1 hover:bg-slate-100 border-b cursor-pointer'>
-                        <ViewMembersPopup />
+                        <ViewMembersPopup members={ GroupDetails.members } Admin={ GroupDetails.Admin } />
                     </div>
                 </div>
             </PopoverContent>
@@ -206,16 +258,46 @@ function Settings() {
 }
 
 
-function LeaveGroupChatPopup() {
+function LeaveGroupChatPopup({ GroupID }: { GroupID: number }) {
 
     const [LeaveGroupPopup, setLeaveGroupPopup] = useState(false)
-    const [err, setErr] = useState('')
+    const router = useRouter()
 
+    const [err, setErr] = useState('')
+    const { data: session, status } = useSession()
+
+    const socket: Socket = useMemo(() => {
+
+        const socket = getSocket()
+
+        return socket
+    }, [])
+
+
+    useEffect(() => {
+        if (LeaveGroupPopup) {
+            setErr('')
+        }
+    }, [LeaveGroupPopup])
 
     async function Leave() {
 
         try {
-            alert('leave group')
+            const myheaders = {
+                'Content-Type': 'application/json',
+                // Add the token to headers, check if session exists and has mytoken
+                'Authorization': `Bearer ${(session as any).mytoken}`
+            }
+
+            const response = await axios.post('http://localhost:4000/chats/leavegroupchat?chatid=' + GroupID, {}, { headers: myheaders })
+
+            if (response.status === 200) {
+
+                router.replace('/')
+                socket.emit('deletegroup', response.data.data.GroupID)
+
+                //send socket event for Chat
+            }
 
 
         }
@@ -224,6 +306,7 @@ function LeaveGroupChatPopup() {
         }
 
     }
+
     return (
         <Dialog open={ LeaveGroupPopup } onOpenChange={ setLeaveGroupPopup }>
             <DialogTrigger asChild>
@@ -238,8 +321,6 @@ function LeaveGroupChatPopup() {
                         Are you sure you want to leave this group
                     </DialogDescription>
                 </DialogHeader>
-
-
 
                 <div className="min-h-[56px] py-2">
                     {
@@ -261,17 +342,39 @@ function LeaveGroupChatPopup() {
     )
 }
 
-function DeleteGroupChatPopup() {
+function DeleteGroupChatPopup({ GroupID }: { GroupID: number }) {
 
     const [DeleteGroupPopup, setDeleteGroupPopup] = useState(false)
     const [DeleteCred, setDeleteCred] = useState('')
     const [err, setErr] = useState('')
+    const { data: session, status } = useSession()
+    const router = useRouter()
 
+    const socket: Socket = useMemo(() => {
+
+        const socket = getSocket()
+
+        return socket
+    }, [])
 
     async function Delete() {
 
         try {
-            alert('Delete group')
+            const myheaders = {
+                'Content-Type': 'application/json',
+                // Add the token to headers, check if session exists and has mytoken
+                'Authorization': `Bearer ${(session as any).mytoken}`
+            }
+
+            const response = await axios.post('http://localhost:4000/chats/deletegroupchat', { chatid: GroupID, password: DeleteCred }, { headers: myheaders })
+
+            if (response.status === 200) {
+
+                router.replace('/')
+                socket.emit('deletegroup', response.data.data.GroupID)
+
+                //send socket event for Chat
+            }
 
 
         }
@@ -280,6 +383,12 @@ function DeleteGroupChatPopup() {
         }
 
     }
+
+    useEffect(() => {
+        if (DeleteGroupPopup) {
+            setErr('')
+        }
+    }, [DeleteGroupPopup])
     return (
         <Dialog open={ DeleteGroupPopup } onOpenChange={ setDeleteGroupPopup }>
             <DialogTrigger asChild>
@@ -373,7 +482,7 @@ function ShareInvitePopup() {
     )
 }
 
-function ViewMembersPopup() {
+function ViewMembersPopup({ members, Admin }: { members: string[], Admin: string }) {
     return (
         <Dialog>
             <DialogTrigger asChild>
@@ -388,43 +497,18 @@ function ViewMembersPopup() {
                 </DialogHeader>
                 <div className="flex w-full h-[300px] gap-2 flex-col overflow-y-auto">
 
-                    <p className='cursor-pointer font-bold h-fit p-1 rounded-sm
-                     hover:bg-slate-200'>Loerem Ipsum (Admin)</p>
+                    { members.map((member) => {
 
-                    <p className='cursor-pointer h-fit p-1 rounded-sm
-                     hover:bg-slate-200'>Loerem Ipsum</p>
-                    <p className='cursor-pointer h-fit p-1 rounded-sm
-                     hover:bg-slate-200'>Loerem Ipsum</p>
-                    <p className='cursor-pointer h-fit p-1 rounded-sm
-                     hover:bg-slate-200'>Loerem Ipsum</p>
-
-                    <p className='cursor-pointer h-fit p-1 rounded-sm
-                     hover:bg-slate-200'>Loerem Ipsum</p>
-
-                    <p className='cursor-pointer h-fit p-1 rounded-sm
-                     hover:bg-slate-200'>Loerem Ipsum</p>
-                    <p className='cursor-pointer h-fit p-1 rounded-sm
-                     hover:bg-slate-200'>Loerem Ipsum</p>
-                    <p className='cursor-pointer h-fit p-1 rounded-sm
-                     hover:bg-slate-200'>Loerem Ipsum</p>
-                    <p className='cursor-pointer h-fit p-1 rounded-sm
-                     hover:bg-slate-200'>Loerem Ipsum</p>
-
-                    <p className='cursor-pointer h-fit p-1 rounded-sm
-                     hover:bg-slate-200'>Loerem Ipsum</p>
-                    <p className='cursor-pointer h-fit p-1 rounded-sm
-                     hover:bg-slate-200'>Loerem Ipsum</p>
-                    <p className='cursor-pointer h-fit p-1 rounded-sm
-                     hover:bg-slate-200'>Loerem Ipsum</p>
-                    <p className='cursor-pointer h-fit p-1 rounded-sm
-                     hover:bg-slate-200'>Loerem Ipsum</p>
-
-                    <p className='cursor-pointer h-fit p-1 rounded-sm
-                     hover:bg-slate-200'>Loerem Ipsum</p>
-                    <p className='cursor-pointer h-fit p-1 rounded-sm
-                     hover:bg-slate-200'>Loerem Ipsum</p>
-                    <p className='cursor-pointer h-fit p-1 rounded-sm
-                     hover:bg-slate-200'>Loerem Ipsum</p>
+                        return (
+                            <p className='cursor-pointer font-bold h-fit p-1 rounded-sm relative
+                        hover:bg-slate-200'>{ member }
+                                <span className='absolute right-0'>
+                                    { member === Admin ? ' Admin' : '' }
+                                </span>
+                            </p>
+                        )
+                    })
+                    }
 
                 </div>
                 <DialogFooter className="sm:justify-start">
@@ -440,35 +524,59 @@ function ViewMembersPopup() {
 }
 
 type Messageprop = {
-    msg: string,
+    msg: any,
     type: 'OTHER' | 'USER'
 }
 
 function Message({ msg, type }: Messageprop) {
     return (
         <div className={ ` rounded-lg px-2 py-1 w-fit max-w-[60%]  flex flex-col ${type === 'OTHER' ? 'bg-[#efefef] self-start' : ' bg-purple-400  text-white'} ` }>
-            { type === 'OTHER' && <p className='font-bold'>Sender Name</p> }
-            { msg }
+            { type === 'OTHER' && <p className='font-bold'>{ (msg?.Sender as string).split('@')[0] }</p> }
+            { msg?.Message }
         </div>
     )
 }
 
-function MessageInputBar({ status }: { status: string }) {
+function MessageInputBar({ status, GroupID }: { status: string, GroupID: string }) {
     const [message, SetMessage] = useState('')
+    const socket: Socket = useMemo(() => {
 
+        const socket = getSocket()
+
+        return socket
+    }, [])
+
+    const { data: session, status: sessionstatus } = useSession()
+
+
+    useEffect(() => {
+
+        if (socket) {
+            socket.on('msg_ack', (msg) => {
+                console.log('message recieved by server')
+                SetMessage('')
+            })
+
+        }
+    }, [socket])
+
+    function SendMessage() {
+        if (socket.connected && session) {
+            socket.emit('send_message',
+                {
+                    Sender: session.user?.email,
+                    Message: message,
+                    Group: parseInt(GroupID)
+                })
+
+
+        }
+    }
     function HandleInput(e: ChangeEvent<HTMLInputElement>) {
         SetMessage(e.target.value)
     }
 
-    function SendMessage() {
-        if (!message) {
-            alert('empty')
-        }
-        const msg = message
-        // send this to backend 
 
-        SetMessage('')
-    }
 
     return (
         <div className='flex h-[50px] w-full bg-slate-100 justify-end 

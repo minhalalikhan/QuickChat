@@ -158,13 +158,11 @@ function GroupChatCard({ groupchat, FetchFunc }: { groupchat: any, FetchFunc: Fu
 
     useEffect(() => {
 
-        socket.on('message', () => {
+        socket.on('message', (msg) => {
+            console.log('msg from server socket :', msg)
 
 
 
-            return () => {
-                socket.disconnect()
-            }
         })
     }, [])
     const [apicall, setApiCall] = useState({ data: null, error: false, loading: false })
@@ -389,12 +387,13 @@ function JoinGroupChatPopup({ GroupDetails }: { GroupDetails: any }) {
     const [err, setErr] = useState('')
     const { data: session, status } = useSession()
     const router = useRouter()
-    const socket: Socket = useMemo(() => {
+    const socket: Socket = getSocket()
+    // useMemo(() => {
 
-        const socket = getSocket()
+    //     const socket = getSocket()
 
-        return socket
-    }, [])
+    //     return socket
+    // }, [])
 
 
     useEffect(() => {

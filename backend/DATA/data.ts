@@ -27,3 +27,56 @@ export const GroupChats = [
         members: ['phantomvoid@gmail.com',]
     }
 ]
+
+export const Messages = [
+    {
+        Message: 'Hello there',
+        Group: 2,
+        Sender: 'minhalalikhan.786@gmail.com',
+        TimeStamp: ''
+    },
+
+    {
+        Message: 'welcome',
+        Group: 2,
+        Sender: 'minhalalikhan.786@gmail.com',
+        TimeStamp: ''
+    },
+    {
+        Message: 'Hola',
+        Group: 2,
+        Sender: 'minhalalikhan110@gmail.com',
+        TimeStamp: ''
+    },
+]
+
+
+export const LastMessage: {
+    id: number,
+    LatestMessage: string,
+    User: string,
+    GroupID: number,
+    UnreadCount: number,
+    time: string,
+    Sender: string
+
+}[] = [
+        {
+            GroupID: 2,
+            LatestMessage: "1234",
+            Sender: "minhalalikhan.786@gmail.com",
+            UnreadCount: 0,
+            User: "minhalalikhan.786@gmail.com",
+            id: 2,
+            time: "1732878401243",
+        },
+        {
+            GroupID: 2,
+            LatestMessage: "1234",
+            Sender: "minhalalikhan.786@gmail.com",
+            UnreadCount: 0,
+            User: "minhalalikhan110@gmail.com",
+            id: 2,
+            time: "1732878401243",
+        }
+    ]

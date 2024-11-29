@@ -15,6 +15,10 @@ const Users: User[] = [{
     id: 'firstone',
     email: 'minhalalikhan.786@gmail.com',
     password: '$2a$10$JgrjNgVUhcchv/O1mp9Y8ek0oMVzq9X78fuOYMQeXmnTwMbImr3sq'
+}, {
+    id: 'destro',
+    email: 'minhalalikhan110@gmail.com',
+    password: '$2a$10$3d3KfZeep9jCreAYBHcd5etAPnvNBG4RGSJB6.bdOhYJXETgBoJuG'
 }]
 
 export async function SignUp(req: Request, res: Response) {
@@ -29,6 +33,7 @@ export async function SignUp(req: Request, res: Response) {
 
     const id = Date.now().toString()
     const hashedpassword = await bcrypt.hash(password, SALT)
+    console.log(hashedpassword)
     Users.push({ email, password: hashedpassword, id })
     const token = jwt.sign({ email: email }, JWT_SECRET, { expiresIn: '1h' })
 

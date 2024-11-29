@@ -9,10 +9,13 @@ export function getSocket(): Socket {
     // console.log('socket url : ', process.env.NEXT_PUBLIC_SOCKET_URL)
     if (!socket) {
         console.log('creating connection')
-        socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, { autoConnect: false, reconnection: false })
-        return socket.connect()
+        socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, { autoConnect: true, reconnection: true })
+
+        return socket
+        // .connect()
     }
 
+    console.log('socket status :', socket.connected)
     return socket.connect()
 
 }

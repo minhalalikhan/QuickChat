@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authMiddleware } from "../controllers/AuthController";
-import { GroupChats } from "../../DATA/data";
+import { GroupChats, LastMessage, Messages } from "../../DATA/data";
 import bcrypt from 'bcryptjs';
 
 import { SALT } from "../controllers/AuthController";
@@ -28,10 +28,6 @@ function HideMembers(input: any[], email: string) {
 
 function format(input: any[]) {
     const Newresults = input.map((Group) => {
-
-
-
-
 
         return { ...Group, password: '' }
     })
@@ -89,9 +85,42 @@ ChatRouter.get('/getchatmessages', async (req, res) => {
         res.status(403).json({ message: 'You Dont have access to this group yet' })
         return
     }
-    res.json({ message: 'group chat here', data: [] })
+
+    const GroupMessages = Messages.filter((msg) => msg.Group === Group.id)
+
+    res.json({
+        message: 'group chat here',
+        data: {
+            GroupDetails: { ...Group, password: '' },
+            GroupMessages
+        }
+    })
 
 })
+
+// ChatRouter.get('/getGroupDetails', async (req, res) => {
+//     const { chatid = '' } = req.query
+//     const email = (req as any).email
+
+//     if (!chatid || isNaN(Number(chatid)) || !Number.isInteger(Number(chatid))) {
+
+//         res.status(400).json({
+//             error: "Bad Request",
+//             message: "Missing or invalid 'id' query parameter. Expected an integer."
+//         });
+//         return
+//     }
+
+
+//     const Group = GroupChats.find((grp) => grp.id === Number(chatid))
+//     if (!Group) {
+//         res.status(404).json({ message: 'Group Not found' })
+//         return
+//     }
+
+//     res.json({ message: 'group chat here', data: [] })
+
+// })
 
 ChatRouter.get('/mygroupchats/', (req, res) => {
 
@@ -197,23 +226,98 @@ ChatRouter.post('/joingroupchat', async (req, res) => {
 
 ChatRouter.post('/leavegroupchat', (req, res) => {
 
-    // return all chats that I am part of 
-    // apply pagination
-    //  keyword filter
-    // order : alphabetic, size , created date
+    const { chatid } = req.query
+    const email = (req as any).email
 
-    res.send('working on this one')
+    if (!chatid || isNaN(Number(chatid)) || !Number.isInteger(Number(chatid))) {
 
+        res.status(400).json({
+            error: "Bad Request",
+            message: "Missing or invalid 'id' query parameter. Expected an integer."
+        });
+        return
+    }
+
+    console.log('chat ID', chatid)
+    const Group = GroupChats.find((grp) => grp.id === Number(chatid))
+    if (!Group) {
+        res.status(404).json({ message: 'Group Not found' })
+        return
+    }
+
+    const GroupID = Group.id
+    const checkAccess = Group.members.find((user) => user === email)
+    if (!checkAccess) {
+        res.status(403).json({ message: 'Only exsiting members can leave the group' })
+        return
+    }
+
+    Group.members = Group.members.filter((member) => member !== email)
+
+    res.json({
+        message: 'You are no longer part of this group',
+        data: { GroupID }
+    })
 })
 
-ChatRouter.delete('/deletegroupchat', (req, res) => {
+ChatRouter.post('/deletegroupchat', async (req, res) => {
 
-    // return all chats that I am part of 
-    // apply pagination
-    //  keyword filter
-    // order : alphabetic, size , created date
+    const { chatid, password } = req.body
+    const email = (req as any).email
 
-    res.send('working on this one')
+    if (!chatid || isNaN(Number(chatid)) || !Number.isInteger(Number(chatid))) {
+
+        res.status(400).json({
+            error: "Bad Request",
+            message: "Missing or invalid 'id' query parameter. Expected an integer."
+        });
+        return
+    }
+
+
+    const Group = GroupChats.find((grp) => grp.id === Number(chatid))
+    if (!Group) {
+        res.status(404).json({ message: 'Group Not found' })
+        return
+    }
+
+    const GroupID = Group.id
+    const checkAccess = Group.Admin === email
+    if (!checkAccess) {
+        res.status(403).json({ message: 'Only Admin can Delete the group' })
+        return
+    }
+
+    // Validate Password
+    const validpassword = await bcrypt.compare(password, Group.password)
+    if (!validpassword) {
+        res.status(403).json({ message: 'Invalid Credential' })
+        return
+    }
+
+    // delete all messages related to this group
+    for (let i = 0; i < Messages.length; i++) {
+        if (Messages[i].Group == Number(chatid)) {
+            Messages.splice(i, 1)
+        }
+    }
+    // delete all notifications
+    for (let i = 0; i < LastMessage.length; i++) {
+        if (LastMessage[i].GroupID == Number(chatid)) {
+            LastMessage.splice(i, 1)
+        }
+    }
+
+    // Delete the group
+    const Groupindex = GroupChats.findIndex((grp) => grp.id == Number(chatid))
+    GroupChats.splice(Groupindex, 1)
+
+
+    res.json({
+        message: 'You are no longer part of this group',
+        data: { GroupID }
+    })
+
 
 })
 

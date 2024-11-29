@@ -45,6 +45,7 @@ async function getmyGroupChats(session: Session) {
 function ChatList({ }: Props) {
 
     const [GroupList, setGroupList] = useState<Object[]>([])
+    const [NotificationsList, setNotificationsList] = useState<Record<string, any>>({})
 
     const { data: session, status } = useSession()
     const [queuecall, setQueuecall] = useState(true)
@@ -59,6 +60,7 @@ function ChatList({ }: Props) {
             const getres = await getmyGroupChats(session)
 
             setGroupList(getres)
+            socket.emit('Login', { groups: getres, user: session.user?.email })
         }
     }
     useEffect(() => {
@@ -74,8 +76,7 @@ function ChatList({ }: Props) {
 
         const socket = getSocket()
         // console.log('socket connection or not', socket.connected)
-        if (socket.disconnected)
-            return socket.connect()
+
         return socket
     }, [])
 
@@ -85,26 +86,51 @@ function ChatList({ }: Props) {
 
         if (socket) {
 
-            socket.emit('message', "hi from client")
-
-            socket.on('message', (msg) => {
-                console.log('Chat List ', msg)
-
-
-
-            })
-
             socket.on('chatgrouplistupdated', () => {
                 setQueuecall(true)
                 console.log('chatgrouplistupdated called')
                 myfetch()
             })
 
-            return () => {
-                socket.disconnect()
-            }
         }
     }, [socket])
+
+    useEffect(() => {
+        if (socket && GroupList.length > 0) {
+
+
+
+            socket.on('update_notification', (GroupID) => {
+                socket.emit('get_notification', { GroupID: GroupID, user: session?.user?.email })
+            })
+
+            socket.on('take_notification', (lm: any) => {
+                console.log(lm)
+                if (lm?.GroupID)
+                    setNotificationsList({ ...NotificationsList, [lm.GroupID]: lm })
+
+            })
+            // console.log('login ', GroupList)
+        }
+    }, [socket, GroupList, path])
+
+    useEffect(() => {
+
+        if (Object.keys(NotificationsList).length > 0) {
+
+            console.log('path', path)
+            const pathnum = path.split('/')[2]
+            console.log('path data', pathnum)
+            console.log(NotificationsList)
+            if (pathnum && NotificationsList[pathnum]?.UnreadCount > 0) {
+                // if notification coutn for current page >1 
+                console.log('trigger read', { GroupID: pathnum, user: session?.user?.email })
+                socket.emit('read_notification', { GroupID: pathnum, user: session?.user?.email })
+            }
+        }
+    }, [NotificationsList, path])
+
+
 
     return (
         <div className='flex h-full w-[250px] flex-col overflow-y-auto'>
@@ -118,7 +144,7 @@ function ChatList({ }: Props) {
             {
                 GroupList.map((item, i) => {
                     return (
-                        <ChatListItem Group={ item } key={ i } />
+                        <ChatListItem Group={ item } key={ i } Notification={ NotificationsList[(item as any)?.id] } />
                     )
                 })
             }
@@ -131,7 +157,7 @@ function ChatList({ }: Props) {
 export default ChatList
 
 
-function ChatListItem({ Group }: { Group: any }) {
+function ChatListItem({ Group, Notification }: { Group: any, Notification: any }) {
     const path = usePathname()
 
     return (
@@ -139,10 +165,16 @@ function ChatListItem({ Group }: { Group: any }) {
         <Link href={ '/chat/' + Group?.id }
             className={ `w-full flex  flex-col gap-2 p-4 border-b border-b-black hover:bg-gray-100 ${decodeURIComponent(path) === '/chat/' + Group?.GroupName ? 'bg-gray-200' : ''}` }
         >
-            <p>{ Group?.GroupName }</p>
-            <div className='w-full justify-between'>
-                <p>{ }</p>
-                <p></p>
+            <div className='flex gap-3'>
+
+                <p className='font-semibold'>{ Group?.GroupName }</p>
+                { Notification &&
+                    Notification.UnreadCount > 0 &&
+                    <p className='rounded-full bg-red-500 text-white px-2'>{ Notification.UnreadCount }</p> }
+            </div>
+            <div className='w-full flex  gap-1 overflow-hidden text-slate-500 italic flex-wrap'>
+                { Notification && <p>{ (Notification.Sender as string).split('@')[0] } : </p> }
+                { Notification && <p className=''>{ (Notification.LatestMessage as string).slice(0, 10) } </p> }
             </div>
             {/* </div> */ }
         </Link>
